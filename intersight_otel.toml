@@ -1,24 +1,4 @@
-#[otel]
-otel_collector_endpoint = "http://127.0.0.1:4317"
 
-#[[pollers]]
-#name = "inventory-summary"
-#interval_seconds = 60
-#method = "GET"
-#path = "/api/v1/compute/PhysicalSummaries"
-#api_query = '{"$top" = "10" }'
-
-[[pollers]]
-name = "alarms.count"
-interval = 60
-api_query = "api/v1/cond/Alarms?$count=true"
-aggregator = "result_count"
-
-[[pollers]]
-name = "ntp.policy.count"
-api_query = "api/v1/ntp/Policies?$count=true"
-aggregator = "result_count"
-interval = 60
 
 [[tspollers]]
 name = "intersight_blade_host_power"
@@ -28,11 +8,11 @@ filter = { type = "and", fields = [{type = "selector", dimension = "instrument.n
 aggregations = [
 {type = "longSum", name = "count", fieldName = "hw.host.power_count"},
 {type = "doubleSum", name = "hw.host.power-Sum", fieldName = "hw.host.power"},
-{type= "doubleMin", name= "intersight.ucs.host.power.min", fieldName= "hw.host.power_min"},
-{type= "doubleMax", name= "intersight.ucs.host.power.max", fieldName= "hw.host.power_max"}
+{type= "doubleMin", name= "intersight.blade.host.power.min.watts", fieldName= "hw.host.power_min"},
+{type= "doubleMax", name= "intersight.blade.host.power.max.watts", fieldName= "hw.host.power_max"}
 ]
-post_aggregations = [{"type" = "expression", "name" = "intersight.ucs.host.power.avg", "expression" = "(\"hw.host.power-Sum\" / \"count\")"}]
-field_names = ["intersight.ucs.host.power.avg","intersight.ucs.host.power.min","intersight.ucs.host.power.max"]
+post_aggregations = [{"type" = "expression", "name" = "intersight.blade.host.power.avg.watts", "expression" = "(\"hw.host.power-Sum\" / \"count\")"}]
+field_names = ["intersight.blade.host.power.avg.watts","intersight.blade.host.power.min.watts","intersight.blade.host.power.max.watts"]
 otel_dimension_to_attribute_map = { "name" = "intersight.name", "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
 otel_attributes = { "intersight.account.name" = "POD_NAME"}
 interval = 60
@@ -79,11 +59,11 @@ filter = { type = "and", fields = [{type = "selector", dimension = "instrument.n
 aggregations = [
 {type = "longSum", name = "intersight.blade.temp.sensor.count", fieldName = "hw.temperature_count"},
 {type = "doubleSum", name = "hw.temperature-Sum", fieldName = "hw.temperature"},
-{type= "doubleMin", name= "intersight.blade.temperature.min", fieldName= "hw.temperature_min"},
-{type= "doubleMax", name= "intersight.blade.temperature.max", fieldName= "hw.temperature_max"}
+{type= "doubleMin", name= "intersight.blade.temperature.min.celsius", fieldName= "hw.temperature_min"},
+{type= "doubleMax", name= "intersight.blade.temperature.max.celsius", fieldName= "hw.temperature_max"}
 ]
-post_aggregations = [{"type" = "expression", "name" = "intersight.blade.temperature.avg", "expression" = "(\"hw.temperature-Sum\" / \"intersight.blade.temp.sensor.count\")"}]
-field_names = ["intersight.blade.temperature.avg","intersight.blade.temperature.min","intersight.blade.temperature.max"]
+post_aggregations = [{"type" = "expression", "name" = "intersight.blade.temperature.avg.celsius", "expression" = "(\"hw.temperature-Sum\" / \"intersight.blade.temp.sensor.count\")"}]
+field_names = ["intersight.blade.temperature.avg.celsius","intersight.blade.temperature.min.celsius","intersight.blade.temperature.max.celsius"]
 otel_dimension_to_attribute_map = { "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id","hw.temperature.sensor.name" = "intersight.blade.temperature.sensor"}
 otel_attributes = { "intersight.account.name" = "POD_NAME"}
 interval = 60
