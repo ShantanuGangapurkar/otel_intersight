@@ -1,0 +1,139 @@
+#[otel]
+otel_collector_endpoint = "http://127.0.0.1:4317"
+
+#[[pollers]]
+#name = "inventory-summary"
+#interval_seconds = 60
+#method = "GET"
+#path = "/api/v1/compute/PhysicalSummaries"
+#api_query = '{"$top" = "10" }'
+
+[[pollers]]
+name = "alarms.count"
+interval = 60
+api_query = "api/v1/cond/Alarms?$count=true"
+aggregator = "result_count"
+
+[[pollers]]
+name = "ntp.policy.count"
+api_query = "api/v1/ntp/Policies?$count=true"
+aggregator = "result_count"
+interval = 60
+
+[[tspollers]]
+name = "intersight_blade_host_power"
+datasource = "PhysicalEntities"
+dimensions = ["name","host.name", "host.id", "host.type"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.host"}, {type= "selector", dimension= "host.type", value= "compute.Blade"}]}
+aggregations = [
+{type = "longSum", name = "count", fieldName = "hw.host.power_count"},
+{type = "doubleSum", name = "hw.host.power-Sum", fieldName = "hw.host.power"},
+{type= "doubleMin", name= "intersight.ucs.host.power.min", fieldName= "hw.host.power_min"},
+{type= "doubleMax", name= "intersight.ucs.host.power.max", fieldName= "hw.host.power_max"}
+]
+post_aggregations = [{"type" = "expression", "name" = "intersight.ucs.host.power.avg", "expression" = "(\"hw.host.power-Sum\" / \"count\")"}]
+field_names = ["intersight.ucs.host.power.avg","intersight.ucs.host.power.min","intersight.ucs.host.power.max"]
+otel_dimension_to_attribute_map = { "name" = "intersight.name", "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
+
+
+[[tspollers]]
+name = "intersight_blade_active_cpu_utilization"
+datasource = "PhysicalEntities"
+dimensions = ["host.name", "host.id", "host.type"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.cpu"}, {type= "selector", dimension= "host.type", value= "compute.Blade"}]}
+aggregations = [
+{type = "longSum", name = "intersight.blade.cpu.utilization.count", fieldName = "hw.cpu.utilization_c0_count"},
+{type = "doubleSum", name = "intersight.blade.cpu.utilization.sum", fieldName = "hw.cpu.utilization_c0"},
+{type= "doubleMin", name= "intersight.blade.cpu.utilization.min", fieldName= "hw.cpu.utilization_c0_min"},
+{type= "doubleMax", name= "intersight.blade.cpu.utilization.max", fieldName= "hw.cpu.utilization_c0_max"}
+]
+post_aggregations = [{"type" = "expression", "name" = "intersight.blade.cpu.utilization.avg", "expression" = "(\"intersight.blade.cpu.utilization.sum\" / \"intersight.blade.cpu.utilization.count\")"}]
+field_names = ["intersight.blade.cpu.utilization.avg","intersight.blade.cpu.utilization.min","intersight.blade.cpu.utilization.max"]
+otel_dimension_to_attribute_map = { "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
+
+
+[[tspollers]]
+name = "intersight_blade_host_power_state"
+datasource = "PhysicalEntities"
+dimensions = ["host.name", "host.id", "host.type"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.host"}, {type= "selector", dimension= "host.type", value= "compute.Blade"}]}
+aggregations = [
+{type = "longLast", name = "intersight.blade.host.power.state", fieldName = "hw.host.power_state"},
+{type = "thetaSketch", name = "intersight.blade.host.power.state.count", fieldName = "host.id"}
+]
+field_names = ["intersight.blade.host.power.state"]
+otel_dimension_to_attribute_map = {"host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
+
+
+[[tspollers]]
+name = "intersight_blade_temp_sensor"
+datasource = "PhysicalEntities"
+dimensions = ["host.name", "host.id", "host.type","hw.temperature.sensor.name"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.temperature"}, {type= "selector", dimension= "host.type", value= "compute.Blade"},{type = "in", dimension = "hw.temperature.sensor.name", values = ["P1_TEMP_SENS","P2_TEMP_SENS","TEMP_FRONT","TEMP_REAR_BOT","TEMP_REAR_TOP","TEMP_REAR_MID"]}]}
+aggregations = [
+{type = "longSum", name = "intersight.blade.temp.sensor.count", fieldName = "hw.temperature_count"},
+{type = "doubleSum", name = "hw.temperature-Sum", fieldName = "hw.temperature"},
+{type= "doubleMin", name= "intersight.blade.temperature.min", fieldName= "hw.temperature_min"},
+{type= "doubleMax", name= "intersight.blade.temperature.max", fieldName= "hw.temperature_max"}
+]
+post_aggregations = [{"type" = "expression", "name" = "intersight.blade.temperature.avg", "expression" = "(\"hw.temperature-Sum\" / \"intersight.blade.temp.sensor.count\")"}]
+field_names = ["intersight.blade.temperature.avg","intersight.blade.temperature.min","intersight.blade.temperature.max"]
+otel_dimension_to_attribute_map = { "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id","hw.temperature.sensor.name" = "intersight.blade.temperature.sensor"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
+
+
+[[tspollers]]
+name = "intersight_fi_host_power"
+datasource = "PhysicalEntities"
+dimensions = ["name","host.name", "host.id", "host.type"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.host"}, {type= "selector", dimension= "host.type", value= "network.Element"}]}
+aggregations = [
+{type = "longSum", name = "intersight.fi.host.power.count", fieldName = "hw.host.power_count"},
+{type = "doubleSum", name = "hw.host.power-Sum", fieldName = "hw.host.power"},
+{type= "doubleMin", name= "intersight.fi.host.power.min.watts", fieldName= "hw.host.power_min"},
+{type= "doubleMax", name= "intersight.fi.host.power.max.watts", fieldName= "hw.host.power_max"}
+]
+post_aggregations = [{"type" = "expression", "name" = "intersight.fi.host.power.avg.watts", "expression" = "(\"hw.host.power-Sum\" / \"intersight.fi.host.power.count\")"}]
+field_names = ["intersight.fi.host.power.avg.watts","intersight.fi.host.power.min.watts","intersight.fi.host.power.max.watts"]
+otel_dimension_to_attribute_map = { "name" = "intersight.name", "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
+
+
+[[tspollers]]
+name = "intersight_fi_network_bandwidth_utilization"
+datasource = "NetworkInterfaces"
+dimensions = ["host.name","host.id", "host.type"]
+filter = { type = "and", fields = [{type = "selector", dimension = "instrument.name", value = "hw.network"}, {type= "selector", dimension= "host.type", value= "network.Element"}]}
+aggregations = [
+{type = "longSum", name = "intersight.fi.network.bandwidth.utilization.receive.count", fieldName = "hw.network.bandwidth.utilization_receive_count"},
+{type = "doubleSum", name = "hw.network.bandwidth.utilization_receive-Sum", fieldName = "hw.network.bandwidth.utilization_receive"},
+{type = "doubleMin", name = "intersight.network.bandwidth.utilization.receive.min", fieldName = "hw.network.bandwidth.utilization_receive_min"},
+{type = "doubleMax", name = "intersight.network.bandwidth.utilization.receive.max", fieldName = "hw.network.bandwidth.utilization_receive_max"},
+{type = "longSum", name = "intersight.fi.network.bandwidth.utilization.transmit.count", fieldName = "hw.network.bandwidth.utilization_transmit_count"},
+{type = "doubleSum", name = "hw.network.bandwidth.utilization_transmit-Sum", fieldName = "hw.network.bandwidth.utilization_transmit"},
+{type = "doubleMin", name = "intersight.network.bandwidth.utilization.transmit.min",fieldName = "hw.network.bandwidth.utilization_transmit_min"},
+{type = "doubleMax", name = "intersight.network.bandwidth.utilization.transmit.max",fieldName = "hw.network.bandwidth.utilization_transmit_max"}
+]
+post_aggregations = [
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.receive.avg", "expression" = "(\"hw.network.bandwidth.utilization_receive-Sum\" / \"intersight.fi.network.bandwidth.utilization.receive.count\")"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.transmit.avg", "expression" = "(\"hw.network.bandwidth.utilization_transmit-Sum\" / \"intersight.fi.network.bandwidth.utilization.transmit.count\")"}
+]
+field_names = [
+"intersight.network.bandwidth.utilization.receive.avg",
+"intersight.network.bandwidth.utilization.receive.min",
+"intersight.network.bandwidth.utilization.receive.max",
+"intersight.network.bandwidth.utilization.transmit.avg",
+"intersight.network.bandwidth.utilization.transmit.min",
+"intersight.network.bandwidth.utilization.transmit.max"
+]
+otel_dimension_to_attribute_map = {"host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
+otel_attributes = { "intersight.account.name" = "POD_NAME"}
+interval = 60
