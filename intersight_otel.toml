@@ -1,3 +1,19 @@
+#[otel]
+#otel_collector_endpoint = "http://127.0.0.1:4317"
+otel_collector_endpoint = "http://127.0.0.1:4317"
+
+[[pollers]]
+name = "alarms.count"
+interval = 60
+api_query = "api/v1/cond/Alarms?$count=true"
+aggregator = "result_count"
+
+[[pollers]]
+name = "ntp.policy.count"
+api_query = "api/v1/ntp/Policies?$count=true"
+aggregator = "result_count"
+interval = 60
+
 
 
 [[tspollers]]
@@ -29,8 +45,12 @@ aggregations = [
 {type= "doubleMin", name= "intersight.blade.cpu.utilization.min", fieldName= "hw.cpu.utilization_c0_min"},
 {type= "doubleMax", name= "intersight.blade.cpu.utilization.max", fieldName= "hw.cpu.utilization_c0_max"}
 ]
-post_aggregations = [{"type" = "expression", "name" = "intersight.blade.cpu.utilization.avg", "expression" = "(\"intersight.blade.cpu.utilization.sum\" / \"intersight.blade.cpu.utilization.count\")"}]
-field_names = ["intersight.blade.cpu.utilization.avg","intersight.blade.cpu.utilization.min","intersight.blade.cpu.utilization.max"]
+post_aggregations = [
+{"type" = "expression", "name" = "intersight.blade.cpu.utilization.avg_pct", "expression" = "round((\"intersight.blade.cpu.utilization.sum\" / \"intersight.blade.cpu.utilization.count\") * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.blade.cpu.utilization.min_pct", "expression" = "round(\"intersight.blade.cpu.utilization.min\" * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.blade.cpu.utilization.max_pct", "expression" = "round(\"intersight.blade.cpu.utilization.max\" * 100, 3 )"}
+]
+field_names = ["intersight.blade.cpu.utilization.avg_pct","intersight.blade.cpu.utilization.min_pct","intersight.blade.cpu.utilization.max_pct"]
 otel_dimension_to_attribute_map = { "host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
 otel_attributes = { "intersight.account.name" = "POD_NAME"}
 interval = 60
@@ -86,7 +106,6 @@ otel_dimension_to_attribute_map = { "name" = "intersight.name", "host.name" = "i
 otel_attributes = { "intersight.account.name" = "POD_NAME"}
 interval = 60
 
-
 [[tspollers]]
 name = "intersight_fi_network_bandwidth_utilization"
 datasource = "NetworkInterfaces"
@@ -103,16 +122,20 @@ aggregations = [
 {type = "doubleMax", name = "intersight.network.bandwidth.utilization.transmit.max",fieldName = "hw.network.bandwidth.utilization_transmit_max"}
 ]
 post_aggregations = [
-{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.receive.avg", "expression" = "(\"hw.network.bandwidth.utilization_receive-Sum\" / \"intersight.fi.network.bandwidth.utilization.receive.count\")"},
-{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.transmit.avg", "expression" = "(\"hw.network.bandwidth.utilization_transmit-Sum\" / \"intersight.fi.network.bandwidth.utilization.transmit.count\")"}
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.receive.avg_pct", "expression" = "round((\"hw.network.bandwidth.utilization_receive-Sum\" / \"intersight.fi.network.bandwidth.utilization.receive.count\") * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.transmit.avg_pct", "expression" = "round((\"hw.network.bandwidth.utilization_transmit-Sum\" / \"intersight.fi.network.bandwidth.utilization.transmit.count\") * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.receive.min_pct", "expression" = "round(\"intersight.network.bandwidth.utilization.receive.min\" * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.receive.max_pct", "expression" = "round(\"intersight.network.bandwidth.utilization.receive.max\" * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.transmit.min_pct", "expression" = "round(\"intersight.network.bandwidth.utilization.transmit.min\" * 100, 3 )"},
+{"type" = "expression", "name" = "intersight.network.bandwidth.utilization.transmit.max_pct", "expression" = "round(\"intersight.network.bandwidth.utilization.transmit.max\" * 100, 3 )"}
 ]
 field_names = [
-"intersight.network.bandwidth.utilization.receive.avg",
-"intersight.network.bandwidth.utilization.receive.min",
-"intersight.network.bandwidth.utilization.receive.max",
-"intersight.network.bandwidth.utilization.transmit.avg",
-"intersight.network.bandwidth.utilization.transmit.min",
-"intersight.network.bandwidth.utilization.transmit.max"
+"intersight.network.bandwidth.utilization.receive.avg_pct",
+"intersight.network.bandwidth.utilization.receive.min_pct",
+"intersight.network.bandwidth.utilization.receive.max_pct",
+"intersight.network.bandwidth.utilization.transmit.avg_pct",
+"intersight.network.bandwidth.utilization.transmit.min_pct",
+"intersight.network.bandwidth.utilization.transmit.max_pct"
 ]
 otel_dimension_to_attribute_map = {"host.name" = "intersight.host.name", "host.type" = "intersight.host.type","host.id" = "intersight.host.id"}
 otel_attributes = { "intersight.account.name" = "POD_NAME"}
